@@ -66,58 +66,66 @@ def play_pinpoint(data, output_video_path):
             page.goto(GAME_URL)
             human_delay(3, 5)
 
-            # NOTE: The provided HTML showed an iframe. 
-            # We need to ensure we are interacting with the game content.
-            # Usually Playwright auto-pierces open shadow roots, but iframes need frame objects.
-            # Let's check if there is an iframe.
+            # Specific Start Button Selector provided by user
+            start_btn_selector = "#launch-footer-start-button"
             
-            # Wait for game to load.
-            # Look for common "Start" or "Play" buttons.
-            # Based on standard Linkedin Games, there might be a "Play" button.
-            
-            # Heuristic selector for "Play" button
             try:
-                play_button = page.get_by_text("Play", exact=True) or page.get_by_role("button", name="Play")
-                if play_button.is_visible():
-                    play_button.click()
-                    human_delay(1, 2)
-            except:
-                print("No initial 'Play' button found, assuming game started or login required.")
+                # Wait for the start button to be visible
+                print("Waiting for start button...")
+                page.wait_for_selector(start_btn_selector, timeout=10000)
+                page.locator(start_btn_selector).click()
+                print("Clicked Start Game.")
+                human_delay(2, 4)
+            except Exception as e:
+                print(f"Start button interaction failed or skipped: {e}")
 
-            # Check if we need to login? 
-            # The prompt implies a public game url, playing as guest.
-            # If guest mode is behind a modal, we handle it.
-
-            # The game interface usually has an input field.
-            # We need to find the input.
-            input_selector = "input[type='text']" # Generic fallback
+            # The game interface input field
+            input_selector = "input.pinpoint__input"
             
+            # Wait for the first clue to ensure game started
+            try:
+                page.wait_for_selector(".pinpoint__card--clue", timeout=10000)
+                print("First clue visible.")
+            except:
+                print("Warning: Clue card not found immediately.")
+
             # Attempt 1-2: Wrong guesses
-            for guess in guesses_to_try:
-                print(f"Trying plausible guess: {guess}")
+            for i, guess in enumerate(guesses_to_try):
+                print(f"Typing plausible guess {i+1}: {guess}")
                 try:
-                    page.wait_for_selector(input_selector, timeout=5000)
+                    page.wait_for_selector(input_selector, state="visible", timeout=10000)
+                    
+                    # Ensure focus
+                    page.click(input_selector)
+                    
                     human_type(page, input_selector, guess)
                     human_delay(0.5, 1)
                     page.keyboard.press("Enter")
-                    human_delay(2, 4) # Wait for animation/feedback
+                    
+                    # Wait for next clue to appear or animation
+                    # Logic: In Pinpoint, a wrong guess reveals a new clue
+                    human_delay(3, 5) 
+                    
                 except Exception as e:
                     print(f"Could not enter guess '{guess}': {e}")
             
             # Final Attempt: Correct Answer
             print(f"Typing correct answer: {answer}")
-            page.wait_for_selector(input_selector, timeout=5000)
-            
-            # Clear input if needed (usually entering a wrong guess clears it or requires manual clear)
-            page.locator(input_selector).fill("") 
-            
-            human_type(page, input_selector, answer)
-            human_delay(0.5, 1.5)
-            page.keyboard.press("Enter")
-            
-            # Wait for Win Screen
-            human_delay(5, 8) 
-            print("Finished gameplay.")
+            try:
+                page.wait_for_selector(input_selector, state="visible", timeout=10000)
+                
+                # Clear input if needed (usually entering a wrong guess clears it, but just in case)
+                page.locator(input_selector).fill("") 
+                
+                human_type(page, input_selector, answer)
+                human_delay(0.5, 1.5)
+                page.keyboard.press("Enter")
+                
+                # Wait for Win Screen
+                human_delay(5, 8) 
+                print("Finished gameplay.")
+            except Exception as e:
+                print(f"Error entering correct answer: {e}")
 
         except Exception as e:
             print(f"Error during gameplay: {e}")
@@ -132,6 +140,8 @@ def play_pinpoint(data, output_video_path):
             import shutil
             
             # Find the latest .webm file (Playwright records to webm)
+            # We filter for files modified in the last minute to avoid picking old ones
+            # But simple max time is usually fine in ephemeral environments
             files = [f for f in os.listdir(".") if f.endswith(".webm")]
             if files:
                 latest_video = max(files, key=os.path.getctime)
