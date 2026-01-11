@@ -1,10 +1,10 @@
 import os
-from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip
+from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip, ImageClip
 
-def process_video(raw_video_path, output_path, intro_path="intro.mp4", outro_path="outro.mp4"):
+def process_video(raw_video_path, output_path, intro_path="intro.jpg", outro_path="outro.mp4"):
     """
     Processes the raw gameplay video:
-    - Adds intro and outro if they exist.
+    - Adds intro (image or video) and outro if they exist.
     - Converts to MP4 (if not already).
     """
     if not os.path.exists(raw_video_path):
@@ -16,8 +16,13 @@ def process_video(raw_video_path, output_path, intro_path="intro.mp4", outro_pat
         
         # Add Intro
         if os.path.exists(intro_path):
-            print("Adding intro...")
-            clips.append(VideoFileClip(intro_path))
+            print(f"Adding intro from {intro_path}...")
+            if intro_path.endswith(('.jpg', '.jpeg', '.png')):
+                # Create a 6-second video clip from the image
+                intro_clip = ImageClip(intro_path).set_duration(6).set_fps(24)
+                clips.append(intro_clip)
+            else:
+                clips.append(VideoFileClip(intro_path))
         else:
             print("No intro found, skipping.")
 
