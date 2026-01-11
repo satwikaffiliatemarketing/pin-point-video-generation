@@ -3,7 +3,7 @@ import random
 import asyncio
 from playwright.sync_api import sync_playwright, Page, TimeoutError as PlaywrightTimeoutError
 
-GAME_URL = "https://www.linkedin.com/games/pinpoint"
+GAME_URL = "https://www.linkedin.com/games/view/pinpoint/desktop/"
 
 def human_type(page: Page, selector: str, text: str):
     """Types text with random delays between keystrokes."""
