@@ -49,7 +49,11 @@ def upload_video(video_path, data):
     # Description
     description = f"""
 LinkedIn Pinpoint Answer for {formatted_date}.
-See the full solution and archives here: https://wordsolverx.com/pinpoint-solver
+See the full solution and archives here: 
+https://pinpointanswertoday.online/today
+
+Full archive:
+https://pinpointanswertoday.online/archive
 
 Today's LinkedIn Pinpoint answer is revealed in this video along with the clues.
 
