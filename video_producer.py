@@ -1,7 +1,11 @@
 import os
+import PIL.Image
+if not hasattr(PIL.Image, 'ANTIALIAS'):
+    PIL.Image.ANTIALIAS = PIL.Image.LANCZOS
+
 from moviepy.editor import VideoFileClip, concatenate_videoclips, CompositeVideoClip, ImageClip
 
-def process_video(raw_video_path, output_path, intro_path="intro.jpg", outro_path="outro.mp4"):
+def process_video(raw_video_path, output_path, intro_path="introvideo.mp4", outro_path="intro.jpg"):
     """
     Processes the raw gameplay video:
     - Adds intro (image or video) and outro if they exist.
@@ -19,23 +23,28 @@ def process_video(raw_video_path, output_path, intro_path="intro.jpg", outro_pat
             print(f"Adding intro from {intro_path}...")
             if intro_path.endswith(('.jpg', '.jpeg', '.png')):
                 # Create a 6-second video clip from the image
-                intro_clip = ImageClip(intro_path).set_duration(6).set_fps(24)
+                intro_clip = ImageClip(intro_path).set_duration(6).set_fps(24).resize(newsize=(1920, 1080))
                 clips.append(intro_clip)
             else:
-                clips.append(VideoFileClip(intro_path))
+                clips.append(VideoFileClip(intro_path).resize(newsize=(1920, 1080)))
         else:
             print("No intro found, skipping.")
 
         # Add Gameplay
         print("Processing gameplay footage...")
-        gameplay = VideoFileClip(raw_video_path)
+        gameplay = VideoFileClip(raw_video_path).resize(newsize=(1920, 1080))
         # Optional: Trim start/end if needed, or overlay text
         clips.append(gameplay)
 
         # Add Outro
         if os.path.exists(outro_path):
             print("Adding outro...")
-            clips.append(VideoFileClip(outro_path))
+            if outro_path.endswith(('.jpg', '.jpeg', '.png')):
+                # Create a 6-second video clip from the image
+                outro_clip = ImageClip(outro_path).set_duration(6).set_fps(24).resize(newsize=(1920, 1080))
+                clips.append(outro_clip)
+            else:
+                clips.append(VideoFileClip(outro_path).resize(newsize=(1920, 1080)))
         else:
             print("No outro found, skipping.")
 
